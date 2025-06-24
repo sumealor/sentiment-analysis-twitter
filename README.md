@@ -61,7 +61,7 @@ Class imbalance was mitigated using `class_weight='balanced'`.
 
 Shows where the model made correct vs incorrect predictions across the sentiment classes.
 
-![Confusion Matrix](results/figures/log_reg_conf_matrix.png)
+![Confusion Matrix](results/figures/confusion_matrix.png)
 
 ###  F1 Scores by Class
 
