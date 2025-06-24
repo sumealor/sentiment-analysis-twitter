@@ -1,161 +1,110 @@
-# ✈️ Airline Tweet Sentiment Analysis
+# ✈️ Twitter Airline Sentiment Analysis
 
-This project performs **multiclass sentiment classification** on tweets related to airline experiences. It applies natural language processing, feature engineering, and logistic regression to classify tweets as `positive`, `neutral`, or `negative`.
+## 📌 Overview
 
----
+This project performs multiclass sentiment classification on airline-related tweets using:
+- TF-IDF vectorization and dimensionality reduction (Truncated SVD)
+- Logistic Regression with class balancing (`class_weight="balanced"`)
+- Feature selection using `SelectFromModel` (L1-based)
+- Modular, production-style project structure
 
-## 📂 Project Structure
+## 📁 Project Structure
 
-```
+```bash
 .
-├── notebooks/                # Jupyter notebooks
-│   └── sen_sis.ipynb         # Main experimentation file
-├── src/                      # Python scripts (modular)
-│   ├── features/             # Data loading and preprocessing
-│   ├── models/               # Model training logic
-│   └── utils/                # (Optional) Helper functions
-├── data/
-│   ├── raw/                  # Original dataset
-│   └── processed/            # Cleaned/prepared datasets
-├── results/
-│   ├── figures/              # Plots and evaluation visuals
-│   └── reports/              # Output metrics and logs
+├── notebooks/               # Jupyter notebooks (main analysis)
+│   └── sen_sis.ipynb
+├── src/                     # Python scripts for modular code
+│   ├── features/            # Feature engineering and processing
+│   ├── models/              # Model training and evaluation
+│   └── utils/               # Metrics and plotting utilities
+├── data/                    # Data storage
+│   ├── raw/                 # Original data
+│   └── processed/           # Cleaned or transformed data
+├── results/                 # Output results
+│   ├── figures/             # PNG plots (confusion matrix, F1, etc.)
+│   └── reports/             # Metrics in .json or .txt format
 └── README.md
 ```
 
----
-
 ## 📊 Dataset
 
-- Source: [Kaggle Airline Sentiment Dataset](https://www.kaggle.com/datasets/crowdflower/twitter-airline-sentiment)
 - Total samples: 14,600 tweets
-- Labels: `positive`, `neutral`, `negative`
-- Features include:
-  - Text content
-  - Airline
-  - Time of tweet
-  - User info
-  - Location
+- Features: tweet text, airline, location, time, etc.
+- Target: sentiment (positive, neutral, negative)
 
----
+## 🪈 Pipeline Overview
 
-## 🧪 Pipeline Overview
-
-- **Text Preprocessing**: 
-  - Cleaned
-  - TF-IDF vectorized (max 1000 features)
-  - Reduced with TruncatedSVD (100 components)
-- **Numerical Features**:
-  - Imputed with mean
-  - Scaled with StandardScaler
-- **Categorical Features**:
-  - Imputed with constant
-  - Encoded with OneHotEncoder
-- **Classifier**:
-  - Logistic Regression with `saga` solver and `class_weight='balanced'`
-- **Feature Selection**:
-  - `SelectFromModel` (L1 penalty) was tested to reduce dimensionality
-
----
-
-## ⚙️ Hyperparameter Choices
-
-- Solver: `saga`
-- Penalty: `l2`
-- Class weight: `balanced`
-- Max iterations: `1000`
-- GridSearch skipped due to compute cost (see note below)
-
----
-
-## ⚠️ Note on Hyperparameter Tuning
-
-A full `GridSearchCV` over logistic regression hyperparameters was considered but skipped due to excessive runtime (10+ hours with TF-IDF + SVD pipeline). Instead, baseline manual settings were chosen to maintain reasonable training time.
-
----
-
-## 📈 Results
-
-| Metric         | Value |
-|----------------|-------|
-| Accuracy       | 0.71  |
-| Macro F1 Score | 0.66  |
-| Weighted F1    | 0.72  |
-
-See visualizations in [`results/figures/`](../../../../Downloads/results/figures).
-
----
-
-## 🧠 Key Insights
-
-- `Neutral` and `Positive` classes were underrepresented
-- `class_weight="balanced"` improved recall on those classes
-- TF-IDF dominated feature set → required dimensionality reduction
-- `SelectFromModel` reduced overfitting but increased training time
-- Model favored speed over perfect recall due to pipeline constraints
-
----
-
-## 🐢 Challenges Faced
-
-- TF-IDF + SVD created a large, sparse feature space
-- SAGA solver convergence was slow (~25 mins per training loop)
-- GridSearch was infeasible due to runtime (10+ hours)
-- Feature selection trade-off between accuracy and compute cost
-
----
-
-## 🔮 Future Work
-
-- Try faster linear models like `LinearSVC` or `SGDClassifier`
-- Move `SelectFromModel` inside the pipeline before grid search
-- Test other dimensionality reduction (e.g., PCA or UMAP)
-- Add error analysis for misclassified neutral tweets
-- Visualize top weighted features from logistic regression
-
----
-
-## 📊 Recommended Metrics & Figures (to include)
-
-Save these in:
-```
-results/
-└── figures/
+```text
+Raw Data → Preprocessing → TF-IDF → TruncatedSVD → Scaling + Encoding →
+Feature Selection → Logistic Regression (with class_weight='balanced')
 ```
 
-Create these:
+## 🧠 Key Considerations
 
-- ✅ `confusion_matrix.png`: From `sklearn.metrics.confusion_matrix` + heatmap
-- ✅ `roc_curve.png`: ROC AUC curve if using `predict_proba`
-- ✅ `class_distribution.png`: Barplot of class counts in the dataset
-- ✅ `model_coefficients.png`: Barplot of top logistic regression weights (optional)
-- ✅ `f1_scores.png`: Per-class F1 comparison (bar chart)
+- Class imbalance was addressed using class weights
+- Feature dimensionality reduced using SVD (100 components)
+- GridSearchCV was **skipped** due to very long runtime (>10 hours)
+- Logistic Regression was manually tuned with regularization and solvers
+
+## 📈 Evaluation Results
+
+This section summarizes performance of the final Logistic Regression model.
+
+### 📉 Class Distribution
+
+Class imbalance was mitigated using `class_weight='balanced'`.
+
+![Class Distribution](results/figures/class_distribution.png)
+
+### 📊 Confusion Matrix
+
+Shows where the model made correct vs incorrect predictions across the sentiment classes.
+
+![Confusion Matrix](results/figures/log_reg_conf_matrix.png)
+
+###  F1 Scores by Class
+
+Shows a better sense of performance per class (especially minority classes).
+
+![F1 Scores](results/figures/f1_scores.png)
+
+### ❗Feature Importance
+
+Since Truncated SVD was used to reduce dimensionality from thousands of TF-IDF features to just 100 components, direct feature importance (e.g., word weights) is very complex for interpretation. Therefore no visual showing feature importance is done.
+
+This choice was made to improve runtime and reduce overfitting risk on sparse input.
+
+### 📋 Classification Report
+
+Full precision, recall, and F1 for each class as well as other metrics:
+
+📄 `results/reports/classification_report.txt`
+
+### 📊 Summary Metrics
+
+Accuracy, macro-F1, and weighted-F1:
+
+📄 `results/reports/metrics.json`
+
+## ⏭️ Future Work
+
+- Add more models: LinearSVC, XGBoost for comparison
+- Perform model validation for better models (Runtime too long for slow model)
+- Use SelectFromModel inside pipeline with GridSearch
+- Improve emoji and punctuation normalization on text preprocessing
+- Optimize runtime with model selection strategies
+
+
+## 🛠️ Utilities
+
+Plots and metrics are saved using modular utility scripts:
+
+- `src/utils/metrics.py` – saves classification reports and metric scores
+- `src/utils/plots.py` – saves confusion matrix, F1 scores, etc.
+
+These scripts support reuse across different classifiers.
 
 ---
 
-## 🚀 How to Run
-
-1. Clone this repo:
-   ```bash
-   git clone https://github.com/yourusername/airline-sentiment-analysis.git
-   cd airline-sentiment-analysis
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run the notebook:
-   ```bash
-   jupyter notebook
-   ```
-
-4. Open `notebooks/sen_sis.ipynb` and run all cells.
-
----
-
-## 📁 Acknowledgments
-
-- [Kaggle Airline Sentiment Dataset](https://www.kaggle.com/datasets/crowdflower/twitter-airline-sentiment)
-- Python, pandas, scikit-learn, matplotlib, seaborn
+🚀 Built for modularity, performance, and GitHub clarity.
