@@ -1,0 +1,11 @@
+# Ignore Python environment and junk
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Data files
+data/raw/
